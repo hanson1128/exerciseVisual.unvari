@@ -1,0 +1,133 @@
+
+<br> 
+<center><img src="http://i.imgur.com/sSaOozN.png" width="500"></center>
+
+## Title: Visual Analytics for Policy and Management - Exercise 1
+
+### By Hanson Shi
+
+
+
+
+
+```{r getData, eval=TRUE}
+link='https://github.com/EvansDataScience/VisualAnalytics_2_tabularData/raw/master/data/eduwa.rda'
+
+#getting the data TABLE from the file in the cloud:
+load(file=url(link))
+```
+
+-------------For Barplot Exercise-----------
+```{r freqTab_abs, eval=TRUE}
+absoluteT=table(eduwa$LocaleType,exclude = 'nothing')
+ToPlot=prop.table(absoluteT)
+ToPlot=ToPlot*100
+tableFreq=as.data.frame(ToPlot)
+names(tableFreq)=c("locale","pct")
+library(ggplot2)
+base= ggplot(data = tableFreq, 
+             aes(reorder(x=locale,-pct),
+                 y=pct))
+plot1 = base + geom_bar(fill ="gray",
+                        stat = 'identity') 
+plot1
+```
+
+-------------For Lolliplot Exercise-----------
+```{r lolliplot, eval=TRUE}
+tableFreqO=tableFreq[order(tableFreq$pct),]
+
+tableFreqO$gap=tableFreqO$pct-25
+tableFreqO$PositiveGap=ifelse(tableFreqO$gap>0,T,F)
+
+base = ggplot(tableFreqO, aes(locale,gap,color=PositiveGap,
+                              label = round(gap,3)))
+lolliplot1=base + geom_segment(aes(y = 0, 
+                                   x = locale, 
+                                   yend = gap, 
+                                   xend = locale), color = "gray") 
+lolliplot2=lolliplot1 + geom_point() 
+lolliplot3= lolliplot2 + scale_x_discrete(limits=tableFreqO$locale) 
+lolliplot3 + geom_text(nudge_x=0.3,show.legend = FALSE) + 
+             labs(title='What is the gap for each location in WA with respect to a 25% share of public schools?',
+                  caption='Source: US Department of Education',
+                  x='location',
+                  y='difference with respect to 25%')
+```
+
+
+
+-------------For Boxplot Exercise-----------
+```{r , eval=TRUE}
+ordLabels= levels(eduwa$High.Grade)
+box1 = ggplot(eduwa, aes(y=as.numeric(High.Grade))) 
+box1 = box1 + geom_boxplot(color="red",fill="gold",) + 
+       coord_flip()
+box1 + scale_y_continuous(labels=ordLabels,breaks=1:15)+
+       labs(title='percentage of schools by the highest grade offered',
+            y='highest grade offered', 
+            caption='Source: US Department of Education')
+```
+
+
+
+-------------For Histogram Exercise-----------
+```{r hhh, eval=TRUE}
+eduwa3= eduwa[complete.cases(eduwa$Free.Lunch),]
+base= ggplot(eduwa3,aes(x = Free.Lunch))  
+base= ggplot(eduwa3,aes(x = Free.Lunch))  
+h1= base + geom_histogram(color="red",fill="gold",binwidth = 150,boundary=0) 
+h1 + labs(title="How many schools are giving free lunches in WA?",
+          x="Number of free lunches given",
+          y="Number of schools",
+          caption="Source: US Department of Education")+stat_bin(binwidth = 150, aes(label=..count..), 
+          geom = "text",boundary = 0,vjust=-0.5) 
+```
+
+
+
+```{r tap,  eval=TRUE}
+eduwa4 = eduwa[complete.cases(eduwa$Student.Teacher.Ratio),]
+meanValues = tapply(eduwa4$Student.Teacher.Ratio, 
+                    eduwa4$County, 
+                    mean)
+meanValuesnew = as.data.frame(meanValues)
+```
+
+```{r Mac, eval=TRUE}
+base= ggplot(meanValuesnew,aes(x = meanValues))  
+h1 = base+ geom_histogram(color="red",fill="gold",binwidth = 3,boundary=0) 
+
+
+h2 = h1+ stat_bin(binwidth = 3, aes(label=..count..), 
+        geom = "text",boundary = 0,vjust=-0.5) + 
+        scale_x_continuous(breaks = seq(10, 24, by = 2)) + 
+        geom_vline(aes(xintercept = mean(meanValues), color = "mean"),
+             linetype="dashed", size=1.3, alpha=0.8,show.legend= TRUE,) +
+        theme(legend.title = element_blank())
+h2 + labs(title="County distribution by Average student-teacher ratio", 
+         x = 'Average student-teacher ratio',
+         y = 'Frequency',x = 'Average student-teacher ratio',
+         caption = 'Source: US Department of Education')
+```
+
+-------------For Density Exercise-----------
+```{r density, eval=TRUE}
+ggplot(meanValuesnew, aes(meanValues)) +
+geom_density(adjust=1, color="orange")+
+scale_x_continuous(breaks = seq(10, 24, by = 2))+
+geom_vline(aes(xintercept = mean(meanValues),
+                            color = "Mean"),
+                        linetype="dashed",
+                        size=1.0, alpha=0.9,show.legend= TRUE)+
+geom_vline(aes(xintercept = median(meanValues),
+                            color = "Median"), 
+                        linetype="dashed",
+                        size=1.0, alpha=0.9,show.legend= TRUE)+ 
+labs(title="Density of counties by average student-teacher ratio ", 
+                  x = 'Average student-teacher ratio',
+                  y = 'Density',
+                  caption = 'Source: US Department of Education')+
+theme(legend.title = element_blank())
+```
+
